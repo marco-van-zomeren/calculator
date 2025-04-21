@@ -4,7 +4,7 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Allow frontend from your domain
+// CORS: Allow frontend from your domain
 app.use(cors({
   origin: 'https://designonacid.com'
 }));
@@ -24,6 +24,7 @@ const planetCodes = {
 
 const baseUrl = "https://ssd.jpl.nasa.gov/api/horizons.api";
 
+// Format Date → "YYYY-MM-DD HH:MM"
 function formatDate(date) {
   const pad = n => n.toString().padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
@@ -36,7 +37,7 @@ async function fetchLongitude(planet, birth, lat, lon, elevation = 0) {
   const cleanBirth = formatDate(birthDate);
   const stopTime = formatDate(stopDate);
   const center = `coord@399,${lat},${lon},${elevation}`;
-  const url = `${baseUrl}?format=text&COMMAND='${planet}'&OBJ_DATA='NO'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='${center}'&START_TIME='${cleanBirth}'&STOP_TIME='${stopTime}'&STEP_SIZE='1 m'&QUANTITIES='1'`;
+  const url = `${baseUrl}?format=text&COMMAND='${planet}'&OBJ_DATA='NO'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='${center}'&START_TIME='${cleanBirth}'&STOP_TIME='${stopTime}'&STEP_SIZE='1 m'&QUANTITIES='31'`;
 
   try {
     const res = await fetch(url);
@@ -50,7 +51,9 @@ async function fetchLongitude(planet, birth, lat, lon, elevation = 0) {
 
     const line = match[1].trim().split("\n")[0];
     const parts = line.trim().split(/\s+/);
-    const longitude = parseFloat(parts[2]);
+
+    // For QUANTITIES=31, column 4 is longitude
+    const longitude = parseFloat(parts[4]);
     return isNaN(longitude) ? null : longitude;
   } catch (err) {
     console.error(`Error fetching ${planet}:`, err.message);
