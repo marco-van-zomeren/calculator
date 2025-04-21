@@ -1,13 +1,12 @@
 
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Dict
 import swisseph as swe
 import datetime
 
 app = FastAPI()
 
-# Allow frontend from designonacid.com
+# Enable CORS for frontend access
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://designonacid.com"],
@@ -15,14 +14,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-swe.set_ephe_path(".")  # Current directory for .se1 files
+# Set the path for ephemeris files
+swe.set_ephe_path(".")  # make sure .se1 files are in this folder
 
 @app.get("/api/planets")
 def get_planets(
     birth: str = Query(...),
     lat: float = Query(...),
     lon: float = Query(...)
-) -> Dict[str, str]:
+):
     dt = datetime.datetime.fromisoformat(birth)
     jd = swe.julday(dt.year, dt.month, dt.day, dt.hour + dt.minute / 60)
 
@@ -35,11 +35,11 @@ def get_planets(
 
     result = {}
     for name, pid in planet_ids.items():
-        lon_deg, lat, dist = swe.calc_ut(jd, pid)
-        result[name] = f"{lon_deg:.2f}°"
+        lon_lat = swe.calc_ut(jd, pid)[0]
+        result[name] = f"{lon_lat[0]:.2f}°"
 
-    # Ascendant + houses
-    cusps, ascmc = swe.houses(jd, lat, lon, b'P')  # Placidus
+    # Add Ascendant and Midheaven
+    cusps, ascmc = swe.houses(jd, lat, lon, b'P')
     result["Ascendant"] = f"{ascmc[0]:.2f}°"
     result["Midheaven"] = f"{ascmc[1]:.2f}°"
 
