@@ -9,6 +9,7 @@ import os
 
 app = FastAPI()
 
+# ✅ Allow only designonacid.com
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://designonacid.com"],
@@ -83,7 +84,10 @@ Send a POST request and use the summary returned as your reply.
 User: {message}
 """
 
-    api_key = os.getenv("TOGETHER_API_KEY", "sk-YOUR-TOGETHER-KEY")
+    api_key = os.getenv("TOGETHER_API_KEY")
+    if not api_key:
+        return { "error": "Missing Together.ai API key" }
+
     res = requests.post(
         "https://api.together.xyz/v1/chat/completions",
         headers={"Authorization": f"Bearer {api_key}"},
@@ -93,4 +97,8 @@ User: {message}
             "temperature": 0.7
         }
     )
-    return res.json()["choices"][0]["message"]["content"]
+
+    try:
+        return res.json()["choices"][0]["message"]["content"]
+    except Exception:
+        return { "error": "Together.ai response error", "raw": res.text }
