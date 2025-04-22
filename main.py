@@ -92,7 +92,7 @@ User: {message}
         "https://api.together.xyz/v1/chat/completions",
         headers={"Authorization": f"Bearer {api_key}"},
         json={
-            "model": "mistral-7b-instruct",
+            "model": "meta-llama/Llama-2-70b-chat",
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.7
         }
